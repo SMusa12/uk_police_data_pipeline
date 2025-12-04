@@ -1,9 +1,9 @@
 cabal-version:       2.4
-name:                uk_police_data_pipeline
+name:                haskell-project
 version:             0.1.0.0
 build-type:          Simple
 
-executable uk_police_data_pipeline
+executable haskell-project-exe
   hs-source-dirs: app, src
   main-is: Main.hs
   build-depends:

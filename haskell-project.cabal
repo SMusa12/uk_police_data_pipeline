@@ -8,6 +8,9 @@ library
   exposed-modules:
       CLI
     , Fetch
+    , Types
+    , Database
+    , Parse
   build-depends:
       base >= 4.7 && < 5
     , aeson

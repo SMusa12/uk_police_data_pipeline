@@ -15,6 +15,7 @@ module Fetch
     ( fetchForces
     , fetchCrimesByLocation
     , fetchCrimesByForce
+    , fetchCrimeCategories
     , APIError(..)
     , testFetch
     ) where
@@ -43,14 +44,20 @@ fetchForces = do
     putStrLn "Fetching police forces..."
     makeRequest (baseURL ++ "/forces")
 
+-- | Fetch all crime categories
+fetchCrimeCategories :: IO (Either APIError BL.ByteString)
+fetchCrimeCategories = do
+    putStrLn "Fetching crime categories..."
+    makeRequest (baseURL ++ "/crime-categories")
+
 -- | Fetch crimes at a specific location
 -- Takes latitude, longitude, and date (YYYY-MM format)
 fetchCrimesByLocation :: Double -> Double -> String -> IO (Either APIError BL.ByteString)
 fetchCrimesByLocation lat lng date = do
     putStrLn $ "Fetching crimes at location (" ++ show lat ++ ", " ++ show lng ++ ") for " ++ date
     let url = baseURL ++ "/crimes-street/all-crime?lat=" ++ show lat
-                      ++ "&lng=" ++ show lng
-                      ++ "&date=" ++ date
+                    ++ "&lng=" ++ show lng
+                    ++ "&date=" ++ date
     makeRequest url
 
 -- | Fetch crimes for a specific police force
@@ -59,7 +66,7 @@ fetchCrimesByForce :: String -> String -> IO (Either APIError BL.ByteString)
 fetchCrimesByForce forceId date = do
     putStrLn $ "Fetching crimes for force: " ++ forceId ++ " in " ++ date
     let url = baseURL ++ "/crimes-no-location?category=all-crime&force="
-                      ++ forceId ++ "&date=" ++ date
+                ++ forceId ++ "&date=" ++ date
     makeRequest url
 
 -- | Make an HTTP request with error handling
@@ -68,24 +75,24 @@ makeRequest url = do
     result <- try $ httpLBS (parseRequest_ url)
     case result of
         Left (e :: SomeException) -> do
-            putStrLn $ "✗ Network error: " ++ show e
+            putStrLn $ "Network error: " ++ show e
             return $ Left (NetworkError $ show e)
         Right response -> do
             let status = getResponseStatusCode response
             case status of
                 200 -> do
-                    putStrLn "✓ Request successful"
+                    putStrLn "Request successful"
                     -- Add delay to respect rate limits (100ms between requests)
                     threadDelay 100000
                     return $ Right (getResponseBody response)
                 404 -> do
-                    putStrLn "✗ Resource not found (404)"
+                    putStrLn "Resource not found (404)"
                     return $ Left APINotFoundError
                 429 -> do
-                    putStrLn "✗ Rate limit exceeded (429)"
+                    putStrLn "Rate limit exceeded (429)"
                     return $ Left APIRateLimitError
                 _ -> do
-                    putStrLn $ "✗ HTTP error: " ++ show status
+                    putStrLn $ "HTTP error: " ++ show status
                     return $ Left (NetworkError $ "HTTP " ++ show status)
 
 -- | Helper function to test fetch in isolation
